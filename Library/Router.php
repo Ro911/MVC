@@ -3,6 +3,7 @@
 
 abstract class Router
 {
+    // список роутов - лучше в отдельный файл
     private static $routes = array(
 
         'index' => array(
@@ -98,23 +99,26 @@ abstract class Router
      */
     public static function parse($url)
     {
+        // принимаем урл, берем часть до параметров, обрезаем закрывающий слеш, если есть
         $arr = explode('?', $url);
         $url = rtrim($arr[0], '/');
 
+        // если пусто - то на главную
         if (!$url) {
             self::$controller = 'IndexController';
             self::$action = 'indexAction';
             return;
         }
 
+        // перебор роутов на предмет совпадения решулярки с урлом
         foreach (self::$routes as $route => $item) {
-
             $regex = $item['pattern'];
 
             foreach ($item['params'] as $k => $v) {
                 $regex = str_replace('{' . $k . '}', '(' . $v . ')', $regex);
             }
 
+            // если совпало
             if (preg_match('@^' . $regex . '$@', $url, $matches)) {
                 array_shift($matches);
                 if ($matches) {
@@ -123,6 +127,7 @@ abstract class Router
                     }
                 }
 
+                // определяем названия класса/метода контроллера
                 self::$controller = $item['controller'] . 'Controller';
                 self::$action = $item['action'] . 'Action';
                 $_GET = $matches + $_GET;
@@ -130,6 +135,7 @@ abstract class Router
             }
         }
 
+        // если так ничего и не нашли - 404
         if (is_null(self::$controller) || is_null(self::$action)) {
             throw new Exception('Page not found', 404);
         }
